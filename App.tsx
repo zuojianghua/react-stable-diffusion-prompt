@@ -9,13 +9,13 @@ import {
   Select,
   Button,
   Form,
+  FormInstance,
 } from 'antd';
 const { Title, Paragraph, Text, Link } = Typography;
 const { TextArea } = Input;
 import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
-import { initDB } from 'react-indexed-db';
-
+import { initDB, useIndexedDB } from 'react-indexed-db';
 
 // 翻译接口
 // const translateUrl = `https://fanyi.youdao.com/translate?doctype=json&type=ZH_CN2EN&i=`;
@@ -31,12 +31,15 @@ const DBConfig = {
       storeConfig: { keyPath: 'id', autoIncrement: true },
       storeSchema: [
         { name: 'name', keypath: 'name', options: { unique: false } },
-        { name: 'context', keypath: 'context', options: { unique: false } }
-      ]
-    }
-  ]
+        { name: 'context', keypath: 'context', options: { unique: false } },
+      ],
+    },
+  ],
 };
-initDB
+
+try {
+  initDB(DBConfig);
+} catch (e) {}
 
 // 各类选项参数
 const dataView = [
@@ -260,11 +263,22 @@ const dataOthers = [
 
 const style: React.CSSProperties = { padding: '8px 0' };
 const styleLable = { display: 'block', color: '#999', fontSize: '10px' };
-const styleButton = { borderRadius:'8px 0px 0px 8px'};
-
+const styleButton = { borderRadius: '8px 0px 0px 8px' };
 
 export default function App() {
   const [result, setResult] = useState<string>();
+  const [idx, setIdx] = useState<number>(0);
+  const db = useIndexedDB('prompt');
+  const [form]: [FormInstance] = Form.useForm();
+
+  const [tags, setTags] = useState([]);
+
+  useEffect(() => {
+    db.getAll().then((data) => {
+      setTags(data);
+      console.log(data);
+    });
+  }, []);
 
   // 生成prompt
   const onFinish = async (values: any) => {
@@ -315,6 +329,19 @@ export default function App() {
     console.log('Prompt:', prompt);
   };
 
+  const save = async () => {
+    const values = form.getFieldsValue(true);
+    console.log(values, idx);
+    if (idx == 0) {
+      // 新增数据
+      const insertRes = await db.add({ name: values.tagName, context: values });
+      console.log(insertRes);
+      setIdx(insertRes);
+    } else {
+      // 保存数据
+    }
+  };
+
   return (
     <div style={{ padding: 10 }}>
       <Row>
@@ -325,11 +352,11 @@ export default function App() {
       </Row>
       <Row>
         <Col span={2} style={{ textAlign: 'right', paddingRight: '8px' }}>
-          <Button block style={styleButton}>A</Button>
-          <Button block style={styleButton}>B</Button>
-          <Button block style={styleButton}>C</Button>
-          <Button block style={styleButton}>D</Button>
-          <Button block style={styleButton}>E</Button>
+          {tags.map((data) => (
+            <Button block style={styleButton} type={idx==data.id?"primary":"default"} >
+              {data.name}
+            </Button>
+          ))}
           <Button type="dashed" style={styleButton} block>
             新增
           </Button>
@@ -340,6 +367,7 @@ export default function App() {
             initialValues={{ dataOthers: ['masterpiece', 'best quality'] }}
             onFinish={onFinish}
             autoComplete="off"
+            form={form}
           >
             <TextArea placeholder="自动生成的关键词" value={result} rows={10} />
             <Row gutter={8}>
@@ -452,7 +480,7 @@ export default function App() {
                   </Form.Item>
                 </div>
               </Col>
-              <Col className="gutter-row" span={20}>
+              <Col className="gutter-row" span={16}>
                 <div style={style}>
                   <label style={styleLable}>* 作品主题/内容/场景</label>
                   <Form.Item
@@ -464,11 +492,11 @@ export default function App() {
                       },
                     ]}
                   >
-                    <TextArea placeholder="请在此输入" size="large" rows={3} />
+                    <TextArea placeholder="请在此输入" size="large" rows={4} />
                   </Form.Item>
                 </div>
               </Col>
-              <Col className="gutter-row" span={4}>
+              <Col className="gutter-row" span={8}>
                 <div style={style}>
                   <label style={styleLable}>&nbsp;</label>
                   <Form.Item style={{ marginBottom: '8px' }}>
@@ -481,16 +509,23 @@ export default function App() {
                       翻译&生成
                     </Button>
                   </Form.Item>
-                  <Form.Item>
+
+                  <Input.Group compact style={{ width: '100%' }}>
+                    <Form.Item name="tagName" noStyle>
+                      <Input
+                        style={{ width: 'calc(100% - 60px)' }}
+                        defaultValue="新标签"
+                      />
+                    </Form.Item>
                     <Button
-                      size="large"
                       type="default"
                       htmlType="button"
-                      style={{ width: '100%' }}
+                      style={{ width: '60px' }}
+                      onClick={save}
                     >
-                      快速保存
+                      保存
                     </Button>
-                  </Form.Item>
+                  </Input.Group>
                 </div>
               </Col>
             </Row>
