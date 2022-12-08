@@ -14,8 +14,6 @@ import {
   Popconfirm,
   Card,
 } from 'antd';
-const { Title, Paragraph, Text, Link } = Typography;
-const { TextArea } = Input;
 import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { initDB, useIndexedDB } from 'react-indexed-db';
@@ -33,6 +31,9 @@ import {
   dataTools,
   dataOthers,
 } from './prompt';
+
+const { Title, Paragraph, Text, Link } = Typography;
+const { TextArea } = Input;
 
 try {
   initDB(DBConfig);
@@ -53,7 +54,7 @@ export default function App() {
 
   // 刷新左侧tag清单
   const refreshTagData = () =>
-    db.getAll().then((data) => {
+    db.getAll().then((data:any) => {
       setTags(data);
       console.log(data);
     });
@@ -149,7 +150,7 @@ export default function App() {
   };
 
   // 获取其中一个预设标签
-  const getTags = async (id) => {
+  const getTags = async (id:number) => {
     setIdx(id);
     const dataInfo = await db.getByID(id);
     // console.log(dataInfo);
@@ -191,7 +192,7 @@ export default function App() {
             borderRight: '1px solid #eee',
           }}
         >
-          {tags.map((data) => (
+          {tags.map((data:any) => (
             <Button
               key={data.id}
               block
