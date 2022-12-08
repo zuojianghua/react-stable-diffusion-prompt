@@ -12,6 +12,7 @@ import {
   FormInstance,
   message,
   Popconfirm,
+  Card,
 } from 'antd';
 const { Title, Paragraph, Text, Link } = Typography;
 const { TextArea } = Input;
@@ -39,11 +40,11 @@ try {
 
 const style: React.CSSProperties = { padding: '8px 0' };
 const styleLable = { display: 'block', color: '#999', fontSize: '10px' };
-const styleButton = { borderRadius: '8px 0px 0px 8px' };
+const styleButton = { borderRadius: '8px 0px 0px 8px', borderRight: 'none' };
 
 export default function App() {
   // 初始化
-  const [result, setResult] = useState<string>();
+  const [result, setResult] = useState<string>('');
   const [idx, setIdx] = useState<number>(0);
   const db = useIndexedDB('prompt');
   const [form]: [FormInstance] = Form.useForm();
@@ -111,6 +112,12 @@ export default function App() {
     // console.log('Prompt:', prompt);
   };
 
+  // 新增一个空白标签
+  const addNewTag = () => {
+    setIdx(0);
+    form.resetFields();
+  };
+
   // 保存一组预设标签
   const save = async () => {
     const values = form.getFieldsValue(true);
@@ -170,7 +177,9 @@ export default function App() {
       <Row>
         <Col span={2}></Col>
         <Col span={22}>
-          <h1>Prompt生成器</h1>
+          <h1>
+            <span style={{ fontSize: '1.5em' }}>P</span>rompt生成器
+          </h1>
         </Col>
       </Row>
       <Row>
@@ -193,7 +202,7 @@ export default function App() {
               {data.name}
             </Button>
           ))}
-          <Button type="dashed" style={styleButton} block>
+          <Button type="dashed" style={styleButton} block onClick={addNewTag}>
             新增
           </Button>
         </Col>
@@ -205,7 +214,14 @@ export default function App() {
             autoComplete="off"
             form={form}
           >
-            <TextArea placeholder="自动生成的关键词" value={result} rows={10} />
+            <Card>
+              <Paragraph
+                editable={result?.length != 0}
+                copyable={result?.length != 0}
+              >
+                {result}
+              </Paragraph>
+            </Card>
             <Row gutter={8}>
               <Col className="gutter-row" span={4}>
                 <div style={style}>
@@ -347,7 +363,7 @@ export default function App() {
                   <Input.Group compact style={{ width: '100%' }}>
                     <Form.Item name="tagName" noStyle>
                       <Input
-                        style={{ width: 'calc(100% - 100px)' }}
+                        style={{ width: 'calc(100% - 90px)' }}
                         defaultValue="新标签"
                         placeholder="标签名"
                       />
@@ -355,12 +371,13 @@ export default function App() {
                     <Button
                       type="default"
                       htmlType="button"
-                      style={{ width: '50px' }}
+                      style={{ width: '45px' }}
                       onClick={save}
                     >
                       存
                     </Button>
                     <Popconfirm
+                      placement="leftBottom"
                       title="确认删除?"
                       onConfirm={delTags}
                       okText="Yes"
@@ -369,7 +386,7 @@ export default function App() {
                       <Button
                         type="dashed"
                         htmlType="button"
-                        style={{ width: '50px' }}
+                        style={{ width: '45px' }}
                       >
                         删
                       </Button>
